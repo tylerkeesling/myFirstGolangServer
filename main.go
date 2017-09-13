@@ -12,6 +12,13 @@ type Users struct {
 	Lastname  string `gorm:"not null" form:"lastname" json:"lastname"`
 }
 
+func Cors() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Add("Access-Control-Allow-Origin", "*")
+		c.Next()
+	}
+}
+
 func InitDb() *gorm.DB {
 	db, err := gorm.Open("sqlite3", "./data.db")
 	db.LogMode(true)
@@ -29,6 +36,8 @@ func InitDb() *gorm.DB {
 
 func main() {
 	r := gin.Default() // establish router
+
+	r.Use(Cors())
 
 	v1 := r.Group("api/v1") // establish router by group
 	{
