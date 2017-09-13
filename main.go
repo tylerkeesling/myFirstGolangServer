@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
@@ -46,31 +44,48 @@ func main() {
 }
 
 func GetUsers(c *gin.Context) {
-	var users = []Users{
-		Users{ID: 1, Firstname: "Tyler", Lastname: "Keesling"},
-		Users{ID: 2, Firstname: "Berto", Lastname: "Ortega"},
-	}
+	// connect to and disconnect from db
+	db := InitDb()
+	defer db.Close()
+
+	var users []Users
+	db.Find(&users) // this is SELECT * FROM users
+
+	// display the result
 	c.JSON(200, users)
 }
 
 func GetUser(c *gin.Context) {
-	id := c.Params.ByName("id")
-	userID, _ := strconv.ParseInt(id, 0, 64)
+	db := InitDb()
+	defer db.Close()
 
-	if userID == 1 {
-		content := gin.H{"id": userID, "firstname": "Tyler", "lastname": "Keesling"}
-		c.JSON(200, content)
-	} else if userID == 2 {
-		content := gin.H{"id": userID, "firstname": "Roberto", "lastname": "Ortega"}
-		c.JSON(200, content)
+	id := c.Params.ByName("id")
+	var user Users
+	// SELECT * FROM users WHERE id = 1
+	db.First(&user, id)
+
+	if user.ID != 0 {
+		c.JSON(200, user)
 	} else {
-		content := gin.H{"error": "user with id#" + id + " not found"}
-		c.JSON(404, content)
+		c.JSON(404, gin.H{"error": "User not found."})
 	}
 }
 
 func PostUser(c *gin.Context) {
+	db := InitDb()
+	defer db.Close()
 
+	var user Users
+	c.Bind(&user)
+
+	if user.Firstname != "" && user.Lastname != "" {
+		// insert user into db
+		db.Create(&user)
+		c.JSON(201, gin.H{"success": user})
+	} else {
+		// error
+		c.JSON(422, gin.H{"error": "Fields are empty."})
+	}
 }
 
 func UpdateUser(c *gin.Context) {
