@@ -49,7 +49,8 @@ func GetUsers(c *gin.Context) {
 	defer db.Close()
 
 	var users []Users
-	db.Find(&users) // this is SELECT * FROM users
+	// this is SELECT * FROM users
+	db.Find(&users)
 
 	// display the result
 	c.JSON(200, users)
@@ -93,5 +94,21 @@ func UpdateUser(c *gin.Context) {
 }
 
 func DeleteUser(c *gin.Context) {
-	// future code
+	// Connect and disconnect from db
+	db := InitDb()
+	defer db.Close()
+
+	// Get user ID
+	id := c.Params.ByName("id")
+	var user Users
+	// SELECT * FROM users WHERE id = 1
+	db.First(&user, id)
+
+	if user.ID != 0 {
+		// DELETE FROM users WHERE id = user.ID
+		db.Delete(&user)
+		c.JSON(200, gin.H{"Success": "User #" + id + " successfully deleted."})
+	} else {
+		c.JSON(404, gin.H{"error": "User not found."})
+	}
 }
