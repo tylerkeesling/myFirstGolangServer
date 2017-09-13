@@ -90,7 +90,33 @@ func PostUser(c *gin.Context) {
 }
 
 func UpdateUser(c *gin.Context) {
-	// future code
+	// connect/disconnect from db
+	db := InitDb()
+	defer db.Close()
+
+	// Get user id
+	id := c.Params.ByName("id")
+	var user Users
+	// SELECT * FROM users WHERE id = 1;
+	db.First(&user, id)
+
+	if user.Firstname != "" && user.Lastname != "" {
+		if user.ID != 0 {
+			var newUser Users
+			c.Bind(&newUser)
+
+			result := Users{
+				ID:        user.ID,
+				Firstname: newUser.Firstname,
+				Lastname:  newUser.Lastname,
+			}
+			// UPDATE users SET ....
+			db.Save(&result)
+			c.JSON(200, gin.H{"success": result})
+		} else {
+			c.JSON(404, gin.H{"error": "Fields are empty."})
+		}
+	}
 }
 
 func DeleteUser(c *gin.Context) {
